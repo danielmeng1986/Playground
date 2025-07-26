@@ -3,11 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:city-playground-frontend": "node dist/city-playground-frontend/server/server.mjs"
+    "serve:ssr:city-playground-frontend": "node dist/city-playground-frontend/server/server.mjs",
+    "openapi:generate": "openapi-generator-cli generate -i ../openapi.yaml -g typescript-angular -o ./src/app/api"
   },
   "prettier": {
     "overrides": [
@@ -46,6 +47,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.8.2"
+    "typescript": "~5.8.2",
+    "@openapitools/openapi-generator-cli": "^2.7.0"
   }
 }

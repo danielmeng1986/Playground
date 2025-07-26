@@ -1,0 +1,43 @@
+# Node.js + PostgreSQL 开发环境
+version: '3.9'
+services:
+  backend:
+    image: city-playground-backend:latest
+    container_name: playground-backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/apps/city-playground-backend:/app
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/playground
+    depends_on:
+      - db
+
+  frontend:
+    image: city-playground-frontend:latest
+    container_name: playground-frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./src/apps/city-playground-frontend/src:/app/src
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15-alpine
+    container_name: playground-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: playground
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

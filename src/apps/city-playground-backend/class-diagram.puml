@@ -1,0 +1,71 @@
+@startuml class-diagram
+
+class User {
+  +UserID: int
+  +Name: UserName
+  +Alias: string
+  +Email: string
+}
+
+class City {
+  +CityID: int
+  +Name: string
+  +Country: string
+}
+
+class UserName {
+  +FirstName: string
+  +LastName: string
+}
+
+class Playground {
+  +PlaygroundID: int
+  +Name: string
+  +Location: string
+}
+
+class Visited {
+  +VisitedID: int
+  +UserID: int
+  +PlaygroundID: int
+  +VisitedAt: DATE
+}
+
+class Tag {
+  +TagID: int
+  +Name: string
+}
+
+class Favorite {
+  +FavoriteID: int
+  +UserID: int
+  +PlaygroundID: int
+  +FavoritedAt: DATE
+}
+
+class Wished {
+  +WishedID: int
+  +UserID: int
+  +PlaygroundID: int
+  +WishedAt: DATE
+}
+
+class Review {
+  +ReviewID: int
+  +Rating: int
+  +UserID: int
+  +PlaygroundID: int
+  +ReviewedAt: DATE
+}
+
+class Comment {
+  +CommentID: int
+  +UserID: int
+  +PlaygroundID: int
+  +Content: string
+  +CommentedAt: DATE
+}
+
+
+
+@enduml
