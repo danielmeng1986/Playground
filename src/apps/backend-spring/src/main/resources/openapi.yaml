@@ -1,0 +1,473 @@
+openapi: 3.0.3
+info:
+  description: "API for managing users, cities, playgrounds, and related activities."
+  title: City Playground API
+  version: 1.0.0
+servers:
+- url: http://localhost:3000
+paths:
+  /auth:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_auth_post_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_auth_post_200_response"
+          description: Login successful
+        "401":
+          description: Invalid credentials
+      summary: User login
+      tags:
+      - Auth
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Auth
+  /auth/me:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: Current user info
+        "401":
+          description: Unauthorized
+      security:
+      - bearerAuth: []
+      summary: Get current user info
+      tags:
+      - Auth
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Auth
+  /refresh:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_refresh_post_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_auth_post_200_response"
+          description: Token refreshed
+        "401":
+          description: Invalid refresh token
+      summary: Refresh JWT token
+      tags:
+      - Auth
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Auth
+  /users:
+    get:
+      parameters:
+      - description: Max number of users to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          type: integer
+        style: form
+      - description: Number of users to skip
+        explode: true
+        in: query
+        name: skip
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_users_get_200_response"
+          description: List of users
+      security:
+      - bearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Users
+  /users/{userId}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User details
+        "404":
+          description: User not found
+      security:
+      - bearerAuth: []
+      summary: Get user by ID
+      tags:
+      - Users
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Users
+  /playgrounds:
+    get:
+      parameters:
+      - description: Max number of playgrounds to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          type: integer
+        style: form
+      - description: Number of playgrounds to skip
+        explode: true
+        in: query
+        name: skip
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_playgrounds_get_200_response"
+          description: List of playgrounds
+      summary: Get all playgrounds
+      tags:
+      - Playgrounds
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Playgrounds
+  /playgrounds/{playgroundId}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: playgroundId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playground"
+          description: Playground details
+        "404":
+          description: Playground not found
+      summary: Get playground by ID
+      tags:
+      - Playgrounds
+      x-accepts:
+      - application/json
+      x-tags:
+      - tag: Playgrounds
+components:
+  schemas:
+    UserName:
+      example:
+        FirstName: FirstName
+        LastName: LastName
+      properties:
+        FirstName:
+          type: string
+        LastName:
+          type: string
+      required:
+      - FirstName
+      - LastName
+      type: object
+    User:
+      example:
+        Email: Email
+        UserID: 0
+        Alias: Alias
+        Name:
+          FirstName: FirstName
+          LastName: LastName
+      properties:
+        UserID:
+          type: integer
+        Name:
+          $ref: "#/components/schemas/UserName"
+        Alias:
+          type: string
+        Email:
+          format: email
+          type: string
+      required:
+      - Alias
+      - Email
+      - Name
+      - UserID
+      type: object
+    City:
+      properties:
+        CityID:
+          type: integer
+        Name:
+          type: string
+        Country:
+          type: string
+      required:
+      - CityID
+      - Country
+      - Name
+      type: object
+    Playground:
+      example:
+        PlaygroundID: 0
+        Name: Name
+        Location: Location
+      properties:
+        PlaygroundID:
+          type: integer
+        Name:
+          type: string
+        Location:
+          type: string
+      required:
+      - Location
+      - Name
+      - PlaygroundID
+      type: object
+    Visited:
+      properties:
+        VisitedID:
+          type: integer
+        UserID:
+          type: integer
+        PlaygroundID:
+          type: integer
+        VisitedAt:
+          format: date
+          type: string
+      required:
+      - PlaygroundID
+      - UserID
+      - VisitedAt
+      - VisitedID
+      type: object
+    Tag:
+      properties:
+        TagID:
+          type: integer
+        Name:
+          type: string
+      required:
+      - Name
+      - TagID
+      type: object
+    Favorite:
+      properties:
+        FavoriteID:
+          type: integer
+        UserID:
+          type: integer
+        PlaygroundID:
+          type: integer
+        FavoritedAt:
+          format: date
+          type: string
+      required:
+      - FavoriteID
+      - FavoritedAt
+      - PlaygroundID
+      - UserID
+      type: object
+    Wished:
+      properties:
+        WishedID:
+          type: integer
+        UserID:
+          type: integer
+        PlaygroundID:
+          type: integer
+        WishedAt:
+          format: date
+          type: string
+      required:
+      - PlaygroundID
+      - UserID
+      - WishedAt
+      - WishedID
+      type: object
+    Review:
+      properties:
+        ReviewID:
+          type: integer
+        Rating:
+          type: integer
+        UserID:
+          type: integer
+        PlaygroundID:
+          type: integer
+        ReviewedAt:
+          format: date
+          type: string
+      required:
+      - PlaygroundID
+      - Rating
+      - ReviewID
+      - ReviewedAt
+      - UserID
+      type: object
+    Comment:
+      properties:
+        CommentID:
+          type: integer
+        UserID:
+          type: integer
+        PlaygroundID:
+          type: integer
+        Content:
+          type: string
+        CommentedAt:
+          format: date
+          type: string
+      required:
+      - CommentID
+      - CommentedAt
+      - Content
+      - PlaygroundID
+      - UserID
+      type: object
+    _auth_post_request:
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+      - password
+      - username
+      type: object
+    _auth_post_200_response:
+      example:
+        token: token
+        refreshToken: refreshToken
+        status: status
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        status:
+          type: string
+      required:
+      - refreshToken
+      - status
+      - token
+      type: object
+    _refresh_post_request:
+      properties:
+        refreshToken:
+          type: string
+      required:
+      - refreshToken
+      type: object
+    _users_get_200_response:
+      example:
+        total: 0
+        limit: 1
+        skip: 6
+        users:
+        - Email: Email
+          UserID: 0
+          Alias: Alias
+          Name:
+            FirstName: FirstName
+            LastName: LastName
+        - Email: Email
+          UserID: 0
+          Alias: Alias
+          Name:
+            FirstName: FirstName
+            LastName: LastName
+      properties:
+        users:
+          items:
+            $ref: "#/components/schemas/User"
+          type: array
+        total:
+          type: integer
+        skip:
+          type: integer
+        limit:
+          type: integer
+      required:
+      - limit
+      - skip
+      - total
+      - users
+      type: object
+    _playgrounds_get_200_response:
+      example:
+        total: 6
+        limit: 5
+        skip: 1
+        playgrounds:
+        - PlaygroundID: 0
+          Name: Name
+          Location: Location
+        - PlaygroundID: 0
+          Name: Name
+          Location: Location
+      properties:
+        playgrounds:
+          items:
+            $ref: "#/components/schemas/Playground"
+          type: array
+        total:
+          type: integer
+        skip:
+          type: integer
+        limit:
+          type: integer
+      required:
+      - limit
+      - playgrounds
+      - skip
+      - total
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http

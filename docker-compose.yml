@@ -1,34 +1,46 @@
 # Node.js + PostgreSQL 开发环境
 version: '3.9'
 services:
-  backend:
-    image: city-playground-backend:latest
-    container_name: playground-backend
+  backend-nestjs:
+    image: backend-nestjs:latest
+    container_name: nestjs-backend
     ports:
       - "3000:3000"
     volumes:
-      - ./src/apps/city-playground-backend:/app
+      - ./src/apps/backend-nestjs:/app
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgres://postgres:postgres@db:5432/playground
     depends_on:
       - db
+  
+  backend-spring:
+    image: backend-spring:latest
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/playground
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    depends_on:
+      - db
 
-  frontend:
-    image: city-playground-frontend:latest
-    container_name: playground-frontend
+  frontend-angular:
+    image: frontend-angular:latest
+    container_name: frontend-angular
     ports:
       - "4200:4200"
     volumes:
-      - ./src/apps/city-playground-frontend/src:/app/src
+      - ./src/apps/frontend-angular/src:/app/src
     environment:
       - NODE_ENV=development
     depends_on:
-      - backend
+      - backend-nestjs
 
   db:
     image: postgres:15-alpine
-    container_name: playground-db
+    container_name: postgres-db
     restart: always
     environment:
       POSTGRES_USER: postgres

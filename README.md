@@ -26,8 +26,8 @@
 1. **Build Docker Images** (if not already built):
    ```sh
    # From the project root
-   docker build -t city-playground-backend:latest ./src/apps/city-playground-backend
-   docker build -t city-playground-frontend:latest ./src/apps/city-playground-frontend
+   docker build -t backend-nestjs:latest ./src/apps/backend-nestjs
+   docker build -t frontend-angular:latest ./src/apps/frontend-angular
    ```
 
 2. **Start All Services**
