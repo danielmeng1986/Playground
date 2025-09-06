@@ -1,1 +1,5 @@
 .vscode/settings.json
+src/apps/backend-nestjs/test_api.py
+.gitignore
+src/apps/backend-nestjs/test-auth-api.sh
+src/apps/openapi2.yaml

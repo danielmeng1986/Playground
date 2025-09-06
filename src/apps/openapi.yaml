@@ -1,10 +1,17 @@
 openapi: 3.0.3
 info:
   title: City Playground API
+  contact:
+    name: yingchen
+    email: yingchen.meng@web.de
+    url: www.yingchen.de
   version: 1.0.0
-  description: API for managing users, cities, playgrounds, and related activities.
+  license:
+    name: playground
+    url: 'https://opensource.org/license/mit'
+  description: 'API for managing users, cities, playgrounds, and related activities.'
 servers:
-  - url: http://localhost:3000
+  - url: 'http://localhost:3000'
 paths:
   /auth:
     post:
@@ -16,35 +23,47 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-              required:
-                - username
-                - password
+              $ref: '#/components/schemas/Auth'
       responses:
         '200':
           description: Login successful
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                  refreshToken:
-                    type: string
-                  status:
-                    type: string
-                required:
-                  - token
-                  - refreshToken
-                  - status
+                $ref: '#/components/schemas/Token'
         '401':
           description: Invalid credentials
+        5XX:
+          description: Server Error
+      operationId: post-login
+      description: login with username and password
+  /auth/register:
+    post:
+      summary: register new account
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '409':
+          description: Email already registered
+        '400':
+          description: Invalid input data
+        '5XX':
+          description: Server Error
+      operationId: post-auth-register
+      description: register account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInfo'
+        description: register with email address
   /auth/me:
     get:
       tags:
@@ -61,6 +80,10 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           description: Unauthorized
+        5XX:
+          description: Server Error
+      operationId: get-current-user
+      description: Get current user
   /refresh:
     post:
       tags:
@@ -68,35 +91,23 @@ paths:
       summary: Refresh JWT token
       requestBody:
         required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                refreshToken:
-                  type: string
-              required:
-                - refreshToken
+        content: {}
       responses:
         '200':
           description: Token refreshed
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                  refreshToken:
-                    type: string
-                  status:
-                    type: string
-                required:
-                  - token
-                  - refreshToken
-                  - status
+                $ref: '#/components/schemas/Token'
         '401':
           description: Invalid refresh token
+        5XX:
+          description: Server Error
+      operationId: post-refresh-token
+      description: Refresh token with rToken
+      parameters: []
+      security:
+        - bearerAuth: []
   /users:
     get:
       tags:
@@ -138,7 +149,13 @@ paths:
                   - total
                   - skip
                   - limit
-  /users/{userId}:
+        '401':
+          description: Unauthorized
+        5XX:
+          description: Server Error
+      operationId: get-users
+      description: Get all users
+  '/users/{userId}':
     get:
       tags:
         - Users
@@ -146,8 +163,9 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: userId
+        - name: userId
+          in: path
+          description: "User identifier"
           required: true
           schema:
             type: integer
@@ -158,8 +176,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
         '404':
           description: User not found
+        5XX:
+          description: Server Error
+      operationId: get-user-by-id
+      description: Get user by id
   /playgrounds:
     get:
       tags:
@@ -182,34 +206,27 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  playgrounds:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Playground'
-                  total:
-                    type: integer
-                  skip:
-                    type: integer
-                  limit:
-                    type: integer
-                required:
-                  - playgrounds
-                  - total
-                  - skip
-                  - limit
-  /playgrounds/{playgroundId}:
+                $ref: '#/components/schemas/PlaygroundCollection'
+        '401':
+          description: Unauthorized
+        5XX:
+          description: Server Error
+      operationId: get-playgrounds
+      description: Get list of playgrounds
+      security:
+        - bearerAuth: []
+  '/playgrounds/{playgroundId}':
     get:
       tags:
         - Playgrounds
       summary: Get playground by ID
       parameters:
-        - in: path
-          name: playgroundId
+        - name: playgroundId
           required: true
           schema:
             type: integer
+          in: path
+          description: "Playground identifier"
       responses:
         '200':
           description: Playground details
@@ -217,8 +234,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Playground'
+        '401':
+          description: Unauthorized
         '404':
           description: Playground not found
+        5XX:
+          description: Server Error
+      operationId: get-playgrounds-by-id
+      description: Get playgournd by id
+      security:
+        - bearerAuth: []
 components:
   securitySchemes:
     bearerAuth:
@@ -241,31 +266,18 @@ components:
       properties:
         UserID:
           type: integer
+        Email:
+          type: string
+          format: email
         Name:
           $ref: '#/components/schemas/UserName'
         Alias:
           type: string
-        Email:
-          type: string
-          format: email
       required:
         - UserID
         - Name
         - Alias
         - Email
-    City:
-      type: object
-      properties:
-        CityID:
-          type: integer
-        Name:
-          type: string
-        Country:
-          type: string
-      required:
-        - CityID
-        - Name
-        - Country
     Playground:
       type: object
       properties:
@@ -279,104 +291,85 @@ components:
         - PlaygroundID
         - Name
         - Location
-    Visited:
+    Auth:
+      title: Auth
       type: object
       properties:
-        VisitedID:
-          type: integer
-        UserID:
-          type: integer
-        PlaygroundID:
-          type: integer
-        VisitedAt:
+        username:
           type: string
-          format: date
-      required:
-        - VisitedID
-        - UserID
-        - PlaygroundID
-        - VisitedAt
-    Tag:
+        password:
+          type: string
+    Token:
+      title: Token
       type: object
       properties:
-        TagID:
-          type: integer
-        Name:
+        token:
           type: string
-      required:
-        - TagID
-        - Name
-    Favorite:
+        refreshToken:
+          type: string
+        status:
+          type: integer
+    PlaygroundCollection:
+      title: PlaygroundCollection
       type: object
       properties:
-        FavoriteID:
+        playgrounds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Playground'
+        total:
           type: integer
-        UserID:
+        skip:
           type: integer
-        PlaygroundID:
+        limit:
           type: integer
-        FavoritedAt:
-          type: string
-          format: date
-      required:
-        - FavoriteID
-        - UserID
-        - PlaygroundID
-        - FavoritedAt
-    Wished:
+    RegisterInfo:
+      title: RegisterInfo
+      x-stoplight:
+        id: y2u3qkn5df3pe
       type: object
       properties:
-        WishedID:
-          type: integer
-        UserID:
-          type: integer
-        PlaygroundID:
-          type: integer
-        WishedAt:
+        email:
           type: string
-          format: date
+          format: email
+          x-stoplight:
+            id: mebo54flsgyad
+        password:
+          type: string
+          minLength: 6
+          x-stoplight:
+            id: vctwtwwv1rj4f
       required:
-        - WishedID
-        - UserID
-        - PlaygroundID
-        - WishedAt
-    Review:
+        - email
+        - password
+    RegisterResponse:
+      title: RegisterResponse
       type: object
       properties:
-        ReviewID:
-          type: integer
-        Rating:
-          type: integer
-        UserID:
-          type: integer
-        PlaygroundID:
-          type: integer
-        ReviewedAt:
+        message:
           type: string
-          format: date
+          example: 'User registered successfully'
+        user:
+          type: object
+          properties:
+            UserID:
+              type: integer
+            Email:
+              type: string
+              format: email
+            Alias:
+              type: string
+          required:
+            - UserID
+            - Email
+            - Alias
       required:
-        - ReviewID
-        - Rating
-        - UserID
-        - PlaygroundID
-        - ReviewedAt
-    Comment:
-      type: object
-      properties:
-        CommentID:
-          type: integer
-        UserID:
-          type: integer
-        PlaygroundID:
-          type: integer
-        Content:
-          type: string
-        CommentedAt:
-          type: string
-          format: date
-      required:
-        - CommentID
-        - UserID
-        - PlaygroundID
-        - Content
-        - CommentedAt
+        - message
+        - user
+tags:
+  - name: Auth
+    description: auth
+  - name: Playgrounds
+    description: playgrounds
+  - name: Users
+    description: users
