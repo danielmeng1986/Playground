@@ -109,8 +109,8 @@ export class AuthController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'Server Error',
   })
-  getCurrentUser(@Request() req: AuthenticatedRequest): UserDto {
-    return this.authService.getCurrentUser(req.user.userId);
+  async getCurrentUser(@Request() req: AuthenticatedRequest): Promise<UserDto> {
+    return await this.authService.getCurrentUser(req.user.userId);
   }
 
   @Post('refresh')

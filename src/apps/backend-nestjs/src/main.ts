@@ -38,10 +38,9 @@ async function bootstrap() {
   // Generate and save OpenAPI specification
   const openApiPath = join(process.cwd(), '..', 'openapi2.yaml');
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const originalDoc = document;
 
-    // 重新组织文档结构，确保正确的顺序
+    // Reorganize document structure to ensure correct order
     const orderedDoc = {
       openapi: originalDoc.openapi,
       info: originalDoc.info,
@@ -55,7 +54,7 @@ async function bootstrap() {
     const yamlString = dump(orderedDoc, {
       noRefs: true,
       skipInvalid: true,
-      sortKeys: false, // 保持我们定义的顺序
+      sortKeys: false, // Maintain our defined order
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     writeFileSync(openApiPath, yamlString);

@@ -7,15 +7,9 @@ import {
   AuthExceptions,
   AuthExceptionFactory,
 } from './exceptions/auth.exceptions';
+import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
-
-interface UserEntity {
-  UserID: number;
-  Name: { FirstName: string; LastName: string };
-  Alias: string;
-  Email: string;
-  password: string;
-}
 
 interface JwtPayload {
   username: string;
@@ -24,7 +18,7 @@ interface JwtPayload {
   exp?: number;
 }
 
-// 类型守卫函数
+// Type guard function
 function isValidJwtPayload(obj: unknown): obj is JwtPayload {
   return (
     obj !== null &&
@@ -40,61 +34,54 @@ function isValidJwtPayload(obj: unknown): obj is JwtPayload {
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
-
-  // 模拟用户数据库
-  private readonly users: UserEntity[] = [];
+  constructor(
+    private jwtService: JwtService,
+    private usersService: UsersService,
+  ) {}
 
   async register(registerDto: RegisterDto): Promise<RegisterResponseDto> {
-    // 检查邮箱是否已存在
-    const existingUser = this.users.find((u) => u.Email === registerDto.email);
+    // Check if email already exists
+    const existingUser = await this.usersService.findByEmail(registerDto.email);
     if (existingUser) {
       throw AuthExceptions.EMAIL_EXISTS(registerDto.email);
     }
 
-    // ✅ 400 验证异常（如果需要）
+    // ✅ 400 validation exception (if needed)
     if (!registerDto.email || !registerDto.password) {
       throw AuthExceptions.MISSING_CREDENTIALS();
     }
 
-    // 生成新的用户ID
-    const newUserId = Math.max(...this.users.map((u) => u.UserID)) + 1;
-
-    // 生成用户别名（从邮箱提取）
+    // Generate user alias (extracted from email)
     const alias = registerDto.email.split('@')[0];
 
-    // 加密密码
+    // Encrypt password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
-    // 创建新用户
-    const newUser: UserEntity = {
-      UserID: newUserId,
-      Name: { FirstName: '', LastName: '' }, // 注册时暂时为空，后续可以让用户填写
-      Alias: alias,
-      Email: registerDto.email,
-      password: hashedPassword,
-    };
+    // Create new user
+    const newUser = new User();
+    newUser.FirstName = '';
+    newUser.LastName = '';
+    newUser.Alias = alias;
+    newUser.Email = registerDto.email;
+    newUser.password = hashedPassword;
 
-    // 添加到用户数组
-    this.users.push(newUser);
+    // Save to database
+    const savedUser = await this.usersService.save(newUser);
 
-    // 返回注册结果
+    // Return registration result
     return {
       message: 'User registered successfully',
       user: {
-        UserID: newUser.UserID,
-        Email: newUser.Email,
-        Alias: newUser.Alias,
+        UserID: savedUser.UserID,
+        Email: savedUser.Email,
+        Alias: savedUser.Alias,
       },
     };
   }
 
-  async validateUser(
-    username: string,
-    password: string,
-  ): Promise<UserEntity | null> {
-    const user = this.users.find((u) => u.Alias === username);
+  async validateUser(username: string, password: string): Promise<User | null> {
+    const user = await this.usersService.findByAlias(username);
     if (user && (await bcrypt.compare(password, user.password))) {
       return user;
     }
@@ -102,44 +89,44 @@ export class AuthService {
   }
 
   /**
-   * 演示 AuthExceptionFactory 的使用场景
-   * 带有登录尝试限制的高级验证方法
+   * Demonstrates the usage of AuthExceptionFactory
+   * Advanced validation method with login attempt limits
    */
   async validateUserWithRateLimit(
     username: string,
     password: string,
-  ): Promise<UserEntity | null> {
-    const user = this.users.find((u) => u.Alias === username);
+  ): Promise<User | null> {
+    const user = await this.usersService.findByAlias(username);
     if (!user) {
       return null;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
-      // 重置失败计数（实际应用中）
+      // Reset failure count (in real application)
       return user;
     }
 
-    // 模拟获取失败尝试次数
+    // Simulate getting failed attempt count
     const failedAttempts = this.getFailedLoginAttempts(username);
     const maxAttempts = 5;
 
-    // 使用 AuthExceptionFactory 创建复杂的异常
+    // Use AuthExceptionFactory to create complex exceptions
     throw AuthExceptionFactory.createLoginFailedException(
       failedAttempts + 1,
       maxAttempts,
-      30, // 锁定30分钟
+      30, // Lock for 30 minutes
     );
   }
 
   /**
-   * 模拟方法：获取失败登录尝试次数
-   * 实际应用中应该从数据库或 Redis 中获取
+   * Mock method: Get failed login attempt count
+   * In real applications, this should be retrieved from database or Redis
    */
   private getFailedLoginAttempts(_username: string): number {
-    // 这里返回模拟数据，实际应用中从存储中获取
+    // Return mock data here, in real applications get from storage
     console.log(`Getting failed login attempts for user: ${_username}`);
-    return Math.floor(Math.random() * 3); // 0-2 次失败
+    return Math.floor(Math.random() * 3); // 0-2 failures
   }
 
   async login(authDto: AuthDto): Promise<TokenDto> {
@@ -161,22 +148,29 @@ export class AuthService {
     };
   }
 
-  getCurrentUser(userId: number): UserDto {
-    const user = this.users.find((u) => u.UserID === userId);
+  async getCurrentUser(userId: number): Promise<UserDto> {
+    const user = await this.usersService.findOne(userId);
     if (!user) {
       throw AuthExceptions.USER_NOT_FOUND();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = user;
-    return result as UserDto;
+    // Convert to UserDto format
+    return {
+      UserID: user.UserID,
+      Name: {
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+      },
+      Alias: user.Alias,
+      Email: user.Email,
+    };
   }
 
   refreshToken(token: string): TokenDto {
     try {
       const decoded: unknown = this.jwtService.verify(token);
 
-      // 使用类型守卫进行安全的类型检查
+      // Use type guard for safe type checking
       if (isValidJwtPayload(decoded)) {
         const payload: JwtPayload = {
           username: decoded.username,

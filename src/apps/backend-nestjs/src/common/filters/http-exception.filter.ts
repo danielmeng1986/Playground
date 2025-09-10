@@ -26,7 +26,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let description: string;
 
     if (exception instanceof HttpException) {
-      // 处理 HTTP 异常（包括 400, 401, 409, 500 等）
+      // Handle HTTP exceptions (including 400, 401, 409, 500, etc.)
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
@@ -39,12 +39,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
         description = responseObj.description || responseObj.message || message;
       }
     } else {
-      // 处理未预期的错误（如数据库连接错误、网络错误等）
+      // Handle unexpected errors (like database connection errors, network errors, etc.)
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       message = 'Internal Server Error';
       description = 'An unexpected error occurred';
 
-      // 在开发环境中可以打印详细错误信息
+      // Print detailed error information in development environment
       if (process.env.NODE_ENV !== 'production') {
         console.error('Unexpected error:', exception);
       }
